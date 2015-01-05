@@ -1,0 +1,29 @@
+#!/bin/sh
+#zpool list
+#NAME     SIZE  ALLOC   FREE  CAP  DEDUP  HEALTH  ALTROOT
+#eqpool  1.49T   475G  1.03T  31%  1.00x  ONLINE  -
+#rpool    276G   240G  36.1G  86%  1.00x  ONLINE  -
+# "%-10s %s\n", $1, $2
+ZPOOLID=$1
+THOLD=$2
+CMD="/usr/sbin/zpool"
+/usr/bin/sudo $CMD list $ZPOOLID | sed 's/%//' | awk "NR==2 { 
+if ( \$7 == \"ONLINE\")
+{
+        if ( \$5 >=$THOLD ) 
+        {
+                printf \"CRITICAL: %s CAP %d%%, SIZE: %s, ALLOC: %s, FREE: %s, HEALTH: %s, High_Threshold: %s%%\n\",\$1,\$5,\$2,\$3,\$4,\$7,\"$THOLD\" 
+                exit 2
+        }
+        else
+        {
+                printf \"OK: %s CAP %d%%, SIZE: %s, ALLOC: %s, FREE: %s, HEALTH: %s, High_Threshold: %s%%\n\",\$1,\$5,\$2,\$3,\$4,\$7,\"$THOLD\" 
+                exit 0
+        }
+}
+else
+{
+        printf \"CRITICAL: %s CAP %d%%, SIZE: %s, ALLOC: %s, FREE: %s, HEALTH: %s, High_Threshold: %s%%\n\",\$1,\$5,\$2,\$3,\$4,\$7,\"$THOLD\"
+        exit 2
+}
+}"
